@@ -1,254 +1,267 @@
-// entry/src/main/ets/pages/Index.ets
-
 @Entry
 @Component
 struct Index {
-  // 显示的主文本（当前输入的数字或结果）
-  @State mainDisplay: string = '0';
-  // 显示的副文本（完整的计算表达式，如 "12 + 50 ="）
-  @State subDisplay: string = '';
-  // 标记是否刚完成一次计算，用于下一次输入的逻辑判断
+  // 显示完整的计算表达式，如 "2 × (3 + 5)"
+  @State expression: string = '';
+  // 显示计算结果，如 "= 16"
+  @State resultDisplay: string = '0';
+  // 标记计算是否刚完成
   private isFinished: boolean = false;
 
-  // 按钮数据源
+  // 按钮数据源（6行布局，涵盖括号功能）
   private readonly buttons: string[] = [
-    'C', '÷', '×', '⌫',
-    '7', '8', '9', '-',
+    'C', '(', ')', '⌫',  // 第一行：清除、括号、退格
+    '%', '÷', '×', '1/x',// 第二行：百分比、运算符（增加倒数功能占位，或留空）
+    '7', '8', '9', '-',  // 数字区
     '4', '5', '6', '+',
-    '1', '2', '3', '=',
-    '%', '0', '.', ''
-  // 注：最后一个空字符串是为了占位，或者可以放 "+/-" 功能，这里留空保持布局
+    '1', '2', '3', '=',  // = 号放这里或者底部
+    '0', '.',            // 0 和 .
   ];
+
+  // 优化后的布局：5行 x 4列 (更紧凑，符合习惯)
+  // 行1: C   (   )   ⌫
+  // 行2: 7   8   9   ÷
+  // 行3: 4   5   6   ×
+  // 行4: 1   2   3   -
+  // 行5: 0   .   %   +
+  // 底部: = (独立大按钮)
+  // 下面代码采用 Grid 内部由 0-9 和运算符组成，= 号独立放置的设计，体验更好。
 
   build() {
     Column() {
       // --- 显示区域 ---
       Column() {
-        // 副显示区：显示过程，例如 "120 × 5"
-        Text(this.subDisplay)
-          .fontSize(24)
-          .fontColor('#a0a0a0') // 浅灰色
-          .width('90%')
+        // 算式显示
+        Text(this.expression)
+          .fontSize(30)
+          .fontColor('#7c7c7c')
+          .width('95%')
           .textAlign(TextAlign.End)
-          .margin({ top: 30, bottom: 5 })
+          .margin({ top: 40, bottom: 10 })
+          .maxLines(2)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
 
-        // 主显示区：显示结果或当前输入
-        Text(this.mainDisplay)
-          .fontSize(60)
+        // 结果显示
+        Text(this.resultDisplay)
+          .fontSize(50)
           .fontWeight(FontWeight.Bold)
           .fontColor('#333333')
-          .width('90%')
+          .width('95%')
           .textAlign(TextAlign.End)
           .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis }) // 防止数字过长溢出
       }
       .width('100%')
-      .height('35%')
-      .backgroundColor('#f7f9fc') // 极淡的灰蓝色背景
+      .height('30%')
+      .backgroundColor('#f7f9fc')
       .justifyContent(FlexAlign.End)
       .padding({ bottom: 20 })
 
       // --- 键盘区域 ---
+      // 使用 Flex Wrap 或者 Grid 来布局
+      // 这里使用 Grid，调整为标准的科学计算器布局
       Grid() {
-        ForEach(this.buttons, (item: string) => {
-          GridItem() {
-            if (item !== '') { // 跳过空占位符
-              this.CalculatorButton(item)
-            }
-          }
-          // 让 '=' 号在视觉上更突出，或根据需要调整跨度
-          // 这里使用标准网格，逻辑简单清晰
-        })
+        // 第一排
+        this.GridBtn('C', '#d4d4d2', '#000')
+        this.GridBtn('(', '#d4d4d2', '#000')
+        this.GridBtn(')', '#d4d4d2', '#000')
+        this.GridBtn('⌫', '#d4d4d2', '#000')
+
+        // 第二排
+        this.GridBtn('7')
+        this.GridBtn('8')
+        this.GridBtn('9')
+        this.GridBtn('÷', '#ff9f0a', '#fff')
+
+        // 第三排
+        this.GridBtn('4')
+        this.GridBtn('5')
+        this.GridBtn('6')
+        this.GridBtn('×', '#ff9f0a', '#fff')
+
+        // 第四排
+        this.GridBtn('1')
+        this.GridBtn('2')
+        this.GridBtn('3')
+        this.GridBtn('-', '#ff9f0a', '#fff')
+
+        // 第五排
+        this.GridBtn('0')
+        this.GridBtn('.')
+        this.GridBtn('%') // 将百分号放在这里
+        this.GridBtn('+', '#ff9f0a', '#fff')
       }
-      .columnsTemplate('1fr 1fr 1fr 1fr') // 4列
-      .rowsGap(15)
-      .columnsGap(15)
-      .padding(20)
+      .columnsTemplate('1fr 1fr 1fr 1fr')
+      .rowsGap(12)
+      .columnsGap(12)
+      .padding(15)
       .width('100%')
-      .height('65%')
-      .backgroundColor(Color.White)
-      .borderRadius({ topLeft: 30, topRight: 30 }) // 键盘区域圆角设计
-      .shadow({ radius: 20, color: 'rgba(0,0,0,0.05)' }) // 轻微阴影
+      .height('55%') // 留出空间给等于号
+
+      // 独立的等于号按钮，方便点击
+      Button('=')
+        .width('90%')
+        .height(70)
+        .type(ButtonType.Capsule) // 胶囊型
+        .fontSize(35)
+        .backgroundColor('#4a90e2')
+        .fontColor(Color.White)
+        .margin({ top: 5 })
+        .shadow({ radius: 5, color: 'rgba(74, 144, 226, 0.4)', offsetY: 5 })
+        .onClick(() => {
+          this.handleCalculate();
+        })
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#f7f9fc')
+    .backgroundColor('#fff')
   }
 
-  // 自定义按钮组件构建函数
+  // 封装按钮组件
   @Builder
-  CalculatorButton(text: string) {
-    Button(text)
-      .width(75)
-      .height(75)
-      .type(ButtonType.Circle) // 圆形按钮
-      .fontSize(28)
-      .fontWeight(FontWeight.Medium)
-      .backgroundColor(this.getBtnBackgroundColor(text))
-      .fontColor(this.getBtnTextColor(text))
-      .shadow(this.getBtnShadow(text))
-      .onClick(() => {
-        this.handleInput(text);
-      })
-  }
-
-  // --- 样式逻辑 ---
-
-  getBtnBackgroundColor(text: string): ResourceColor {
-    if (text === '=') return '#4a90e2'; // 蓝色强调
-    if (['C', '⌫', '%'].includes(text)) return '#dce0e5'; // 浅灰功能键
-    if (['÷', '×', '-', '+'].includes(text)) return '#ff9f0a'; // 橙色运算符
-    return '#ffffff'; // 白色数字键
-  }
-
-  getBtnTextColor(text: string): ResourceColor {
-    if (text === '=') return Color.White;
-    if (['÷', '×', '-', '+'].includes(text)) return Color.White;
-    if (['C', '⌫', '%'].includes(text)) return '#333333';
-    return '#333333';
-  }
-
-  getBtnShadow(text: string): ShadowOptions {
-    // 给白色按钮加一点浮起的效果
-    if (!['=', '÷', '×', '-', '+', 'C', '⌫', '%'].includes(text)) {
-      return { radius: 5, color: 'rgba(0,0,0,0.1)', offsetY: 2 };
+  GridBtn(text: string, bgColor: string = '#fff', fontColor: string = '#333') {
+    GridItem() {
+      Button(text)
+        .width(70)
+        .height(70)
+        .type(ButtonType.Circle)
+        .fontSize(text === '⌫' ? 22 : 28) // 调整删除键字体大小
+        .fontWeight(FontWeight.Medium)
+        .backgroundColor(bgColor)
+        .fontColor(fontColor)
+        .shadow(bgColor === '#fff' ? { radius: 5, color: 'rgba(0,0,0,0.1)', offsetY: 2 } : { radius: 0 })
+        .onClick(() => {
+          this.handleInput(text);
+        })
     }
-    return { radius: 0, color: Color.Transparent };
   }
 
-  // --- 核心业务逻辑 ---
+  // --- 逻辑处理 ---
 
-  handleInput(value: string) {
-    // 1. 清除逻辑
-    if (value === 'C') {
-      this.mainDisplay = '0';
-      this.subDisplay = '';
+  handleInput(val: string) {
+    // 1. 清除
+    if (val === 'C') {
+      this.expression = '';
+      this.resultDisplay = '0';
       this.isFinished = false;
       return;
     }
 
-    // 2. 删除逻辑
-    if (value === '⌫') {
+    // 2. 删除
+    if (val === '⌫') {
       if (this.isFinished) {
-        this.mainDisplay = '0';
+        this.expression = '';
         this.isFinished = false;
-        return;
-      }
-      if (this.mainDisplay.length > 1) {
-        this.mainDisplay = this.mainDisplay.slice(0, -1);
-      } else {
-        this.mainDisplay = '0';
+      } else if (this.expression.length > 0) {
+        this.expression = this.expression.slice(0, -1);
       }
       return;
     }
 
-    // 3. 计算结果逻辑 (=)
-    if (value === '=') {
-      if (this.subDisplay === '' && !this.isOperator(this.mainDisplay)) {
-        return; // 没有表达式，不做操作
-      }
-      this.calculateResult();
-      return;
-    }
-
-    // 4. 百分比逻辑 (%)
-    if (value === '%') {
-      let currentVal = parseFloat(this.mainDisplay);
-      this.mainDisplay = (currentVal / 100).toString();
-      return;
-    }
-
-    // 5. 运算符逻辑 (+ - × ÷)
-    if (this.isOperator(value)) {
-      this.isFinished = false;
-
-      // 如果当前主显示区已经是运算符，且用户又按了别的运算符，则替换（例如按错键）
-      // 注意：这里简化逻辑，假设用户先输入数字再输入运算符
-
-      // 构建表达式： 将 "数字" 移入副显示区
-      if (this.subDisplay === '' || this.subDisplay.includes('=')) {
-        this.subDisplay = this.mainDisplay + ' ' + value;
-      } else {
-        // 如果副显示区已有内容，说明在连续计算，比如 1+2+3
-        // 先把之前的算出来
-        this.calculateResult(false);
-        this.subDisplay = this.mainDisplay + ' ' + value;
-      }
-
-      // 重置主显示区等待下一个数字输入
-      this.mainDisplay = '0';
-      return;
-    }
-
-    // 6. 数字和小数点逻辑
-    // 如果上一步刚计算完，用户直接输数字，则重置所有
+    // 3. 连续计算处理
     if (this.isFinished) {
-      this.mainDisplay = value === '.' ? '0.' : value;
-      this.subDisplay = '';
+      // 如果刚算完，输入的是运算符，则基于结果继续算
+      if (['+', '-', '×', '÷', '%'].includes(val)) {
+        this.expression = this.resultDisplay + val;
+      } else {
+        // 如果输入的是数字或括号，开始新计算
+        this.expression = val;
+      }
       this.isFinished = false;
+      this.resultDisplay = '0'; // 重置显示结果
       return;
     }
 
-    // 防止多个小数点
-    if (value === '.' && this.mainDisplay.includes('.')) {
-      return;
-    }
-
-    // 普通数字输入
-    if (this.mainDisplay === '0' && value !== '.') {
-      this.mainDisplay = value;
-    } else {
-      this.mainDisplay += value;
-    }
+    // 4. 普通输入
+    this.expression += val;
   }
 
-  // 计算核心函数
-  calculateResult(showEquals: boolean = true) {
+  // --- 核心计算引擎 (支持括号和优先级) ---
+  handleCalculate() {
+    if (this.expression.trim() === '') return;
+
     try {
-      // 提取副显示区的数字和运算符 (例如 "12 +")
-      let parts = this.subDisplay.split(' ');
-      if (parts.length < 2) return;
+      // 1. 预处理：将界面符号转换为数学符号
+      let formula = this.expression
+        .replace(/×/g, '*')
+        .replace(/÷/g, '/')
+        .replace(/%/g, '*0.01'); // 简单处理百分号：视为乘以 0.01
 
-      let prevNum = parseFloat(parts[0]);
-      let operator = parts[1];
-      let currentNum = parseFloat(this.mainDisplay);
-      let result = 0;
+      // 2. 执行计算
+      let result = this.solveExpression(formula);
 
-      // 执行数学运算
-      switch (operator) {
-        case '+': result = prevNum + currentNum; break;
-        case '-': result = prevNum - currentNum; break;
-        case '×': result = prevNum * currentNum; break; // 逻辑乘
-        case '÷':
-          if (currentNum === 0) {
-            this.mainDisplay = "Error";
-            this.isFinished = true;
-            return;
-          }
-          result = prevNum / currentNum;
-          break;
-      }
+      // 3. 格式化结果 (解决精度问题，如 0.30000000004)
+      let finalRes = parseFloat(result.toFixed(8)).toString();
 
-      // 处理精度问题 (例如 0.1 + 0.2) 并去除尾部零
-      let finalResult = parseFloat(result.toFixed(8)).toString();
-
-      if (showEquals) {
-        this.subDisplay = `${prevNum} ${operator} ${currentNum} =`;
-        this.mainDisplay = finalResult;
-        this.isFinished = true;
-      } else {
-        // 连续计算模式，只更新结果用于下一次计算
-        this.mainDisplay = finalResult;
-      }
-
+      this.resultDisplay = finalRes;
+      this.isFinished = true;
     } catch (e) {
-      this.mainDisplay = 'Error';
+      this.resultDisplay = 'Error';
       this.isFinished = true;
     }
   }
 
-  // 辅助判断是否为运算符
-  isOperator(val: string): boolean {
-    return ['+', '-', '×', '÷'].includes(val);
+  /**
+   * 手写一个简单的表达式求值器 (双栈法)
+   * 支持 + - * / ( )
+   */
+  solveExpression(formula: string): number {
+    // 定义优先级
+    const precedence: Record<string, number> = { '+': 1, '-': 1, '*': 2, '/': 2 };
+
+    let numStack: number[] = [];
+    let opStack: string[] = [];
+
+    // 正则拆分：匹配 数字(包含小数) 或 运算符
+    // 例如 "10.5+2*(3-1)" -> ["10.5", "+", "2", "*", "(", "3", "-", "1", ")"]
+    let tokens = formula.match(/(\d+(\.\d+)?|[\+\-\*\/\(\)])/g);
+    if (!tokens) return 0;
+
+    const performOp = () => {
+      let b = numStack.pop()!;
+      let a = numStack.pop()!;
+      let op = opStack.pop()!;
+      switch (op) {
+        case '+': numStack.push(a + b); break;
+        case '-': numStack.push(a - b); break;
+        case '*': numStack.push(a * b); break;
+        case '/':
+          if(b === 0) throw new Error("DivZero");
+          numStack.push(a / b);
+          break;
+      }
+    };
+
+    for (let token of tokens) {
+      if (!isNaN(Number(token))) {
+        // 是数字
+        numStack.push(Number(token));
+      } else if (token === '(') {
+        // 左括号入栈
+        opStack.push(token);
+      } else if (token === ')') {
+        // 右括号：计算直到遇到左括号
+        while (opStack.length > 0 && opStack[opStack.length - 1] !== '(') {
+          performOp();
+        }
+        opStack.pop(); // 弹出 '('
+      } else {
+        // 是运算符：处理优先级
+        while (
+          opStack.length > 0 &&
+            opStack[opStack.length - 1] !== '(' &&
+            precedence[opStack[opStack.length - 1]] >= precedence[token]
+        ) {
+          performOp();
+        }
+        opStack.push(token);
+      }
+    }
+
+    // 处理剩余的运算
+    while (opStack.length > 0) {
+      performOp();
+    }
+
+    return numStack[0] ?? 0;
   }
 }
