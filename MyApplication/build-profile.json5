@@ -1,0 +1,58 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "material": {
+          "certpath": "C:/Users/Leslie/.ohos/config/openharmony/default_MyApplication_QCHdABgn8hswZ5kZlLw4mCKiYhxhr4pgFBdPFG-Koh0=.cer",
+          "storePassword": "0000001B80B23F2C1EAC266FDB56F6274D62056638EFCA0C7F80BEFCE24D691F797D1C4316DC38C7185CE5",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001B6E5CD79B9BF08031EEC2F1B1BE7782BF3BD082EEE7FF7BF99FAD0D90824A45BD89A1F1F3D2C1FD",
+          "profile": "C:/Users/Leslie/.ohos/config/openharmony/default_MyApplication_QCHdABgn8hswZ5kZlLw4mCKiYhxhr4pgFBdPFG-Koh0=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:/Users/Leslie/.ohos/config/openharmony/default_MyApplication_QCHdABgn8hswZ5kZlLw4mCKiYhxhr4pgFBdPFG-Koh0=.p12"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "compileSdkVersion": 12,
+        // 新增这一行
+        "compatibleSdkVersion": 12,
+        // 确认这里是 12
+        "runtimeOS": "OpenHarmony",
+        // 把原本的 "HarmonyOS" 改成这个
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        }
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug",
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}
